@@ -60,7 +60,8 @@ El **récord** se guarda automáticamente en `hiscore.json` y aparece en el men�
 ## Elementos del juego
 
 - **Invasores:** 55 en formación de 11 × 5. Se mueven de lado, bajan al tocar el borde y se aceleran a medida que quedan menos.
-- **Búnkers:** cuatro escudos destructibles que se erosionan con los disparos, tanto tuyos como enemigos, y también al contacto con los invasores. No se regeneran dentro del mismo nivel.
+- **Fondo:** una galaxia generada por código (nebulosas de colores, una galaxia espiral y estrellas lejanas). Se dibuja una sola vez al arrancar, así que no afecta al rendimiento.
+- **Búnkers (azules):** cuatro escudos destructibles que se erosionan con los disparos, tanto tuyos como enemigos, y también al contacto con los invasores. No se regeneran dentro del mismo nivel.
 - **OVNI:** cruza la parte superior de la pantalla cada 8–20 segundos aproximadamente. Si lo derribas, ganas puntos extra.
 
 ## Dificultad por nivel

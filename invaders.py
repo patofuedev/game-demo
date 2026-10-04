@@ -7,6 +7,7 @@ Controles:
     ESC             salir
 """
 import json
+import math
 import random
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ RED = (255, 60, 60)
 YELLOW = (255, 220, 60)
 CYAN = (60, 220, 255)
 MAGENTA = (255, 90, 220)
+BLUE = (70, 120, 255)
 
 # Sprites en pixel-art: cada '#' es un píxel.
 INVADER_SPRITES = {
@@ -123,6 +125,49 @@ def make_sprite(rows, color, px):
         for x, ch in enumerate(row):
             if ch == "#":
                 pygame.draw.rect(surf, color, (x * px, y * px, px, px))
+    return surf
+
+
+def make_galaxy():
+    """Fondo estático: nebulosas de colores y una galaxia espiral, mezclados en aditivo."""
+    rng = random.Random(7)
+    surf = pygame.Surface((WIDTH, HEIGHT))
+    surf.fill((4, 3, 14))
+
+    def glow(cx, cy, radius, color):
+        layer = pygame.Surface((radius * 2, radius * 2))
+        for r in range(radius, 0, -4):
+            k = (1 - r / radius) ** 2 * 0.35
+            pygame.draw.circle(layer, tuple(int(c * k) for c in color), (radius, radius), r)
+        surf.blit(layer, (cx - radius, cy - radius), special_flags=pygame.BLEND_RGB_ADD)
+
+    for cx, cy, r, col in [(150, 150, 260, (90, 30, 140)), (650, 450, 280, (20, 50, 140)),
+                           (400, 620, 240, (130, 30, 80)), (700, 100, 200, (30, 90, 120))]:
+        glow(cx, cy, r, col)
+
+    # galaxia espiral
+    gx, gy = 560, 230
+    glow(gx, gy, 90, (255, 200, 140))
+    tilt = 0.45
+    for arm in range(2):
+        for _ in range(900):
+            t = rng.uniform(0.3, 4.2)
+            ang = t * 1.5 + arm * math.pi + rng.gauss(0, 0.18)
+            rad = 12 * t * 1.9 * (1 + rng.gauss(0, 0.06))
+            x, y = math.cos(ang) * rad, math.sin(ang) * rad * tilt
+            x, y = x * math.cos(0.5) - y * math.sin(0.5), x * math.sin(0.5) + y * math.cos(0.5)
+            col = (255, 220, 170) if t < 1.5 else (150, 170, 255)
+            b = rng.uniform(0.25, 0.8)
+            px = (int(gx + x + rng.gauss(0, 4)), int(gy + y + rng.gauss(0, 4)))
+            if 0 <= px[0] < WIDTH and 0 <= px[1] < HEIGHT:
+                c = tuple(int(v * b) for v in col)
+                surf.fill(tuple(min(255, a + d) for a, d in zip(surf.get_at(px)[:3], c)), (px, (2, 2)))
+
+    # estrellas lejanas
+    for _ in range(260):
+        x, y = rng.randrange(WIDTH), rng.randrange(HEIGHT)
+        v = rng.randint(60, 200)
+        surf.set_at((x, y), (v, v, min(255, v + 30)))
     return surf
 
 
@@ -266,7 +311,7 @@ class Bunker:
 
     def draw(self, screen):
         for b in self.blocks:
-            pygame.draw.rect(screen, GREEN, b)
+            pygame.draw.rect(screen, BLUE, b)
 
 
 class Ufo:
@@ -310,6 +355,7 @@ class Game:
         self.font = pygame.font.SysFont("monospace", 22, bold=True)
         self.big = pygame.font.SysFont("monospace", 56, bold=True)
         self.stars = [(random.randrange(WIDTH), random.randrange(HEIGHT), random.choice((1, 2))) for _ in range(80)]
+        self.galaxy = make_galaxy()
         self.hiscore = self.load_hiscore()
         self.state = "menu"
         self.paused = False
@@ -473,9 +519,9 @@ class Game:
         self.screen.blit(surf, rect)
 
     def draw_background(self):
-        self.screen.fill(BLACK)
+        self.screen.blit(self.galaxy, (0, 0))
         for x, y, s in self.stars:
-            pygame.draw.rect(self.screen, (90, 90, 120), (x, y, s, s))
+            pygame.draw.rect(self.screen, (170, 170, 210), (x, y, s, s))
 
     def draw_hud(self):
         self.text(f"SCORE {self.score:05d}", self.font, WHITE, topleft=(15, 10))
